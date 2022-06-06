@@ -10,32 +10,28 @@ _version = "0.1"
 import pyflirc
 
 def cmd_transmit(args):
-  if 1:
-    code = [0,2193,717,694,1408,695,1403,707,1385,695,730,695,725,695,720,695,716,694,774,694,746,694,741,694,735,695,730,695,726,694,721,694,1377,695]
-    print (code)
-    if 1:
-      pyflirc.transmit(code, ik_delay=0, repeat=0)
-      time.sleep(.1)
-      pyflirc.transmit(code, ik_delay=100, repeat=0)
+  code = [0,2193,717,694,1408,695,1403,707,1385,695,730,695,725,695,720,695,716,694,774,694,746,694,741,694,735,695,730,695,726,694,721,694,1377,695]
+  print (code)
+  pyflirc.transmit(code, ik_delay=0, repeat=0)
+  time.sleep(.1)
+  pyflirc.transmit(code, ik_delay=100, repeat=0)
 
 def cmd_log(args):
   print ("ready")
   pyflirc.set_normal()
-  if 1:
-    pyflirc.set_debug_pipe(0, 1)
+  pyflirc.set_debug_pipe(0, 1)
+  while 1:
+    buf = []
     while 1:
-      buf = []
-      while 1:
-        s = pyflirc.getlog()
-        if s:
-          buf.append(s)
-          if s.endswith("\r\n"):
-            buf = ''.join(buf)
-            lines = buf.split('\r\n')
-            for line in lines:
-              print(line)
-            break
-        time.sleep(.05)
+      if s := pyflirc.getlog():
+        buf.append(s)
+        if s.endswith("\r\n"):
+          buf = ''.join(buf)
+          lines = buf.split('\r\n')
+          for line in lines:
+            print(line)
+          break
+      time.sleep(.05)
   
 def cmd_record(args):
   key = args.files[0]
@@ -50,64 +46,55 @@ def cmd_format(args):
 def cmd_save(args):
   fn = args.files[0]
   rc = pyflirc.save_config(fn)
-  print ("wrote to %s" % fn)
+  print(f"wrote to {fn}")
   print ("rc:", rc)
 
 def cmd_load(args):
   fn = args.files[0]
   rc = pyflirc.load_config(fn)
-  print ("loaded from %s" % fn)
+  print(f"loaded from {fn}")
   print ("rc:", rc)
 
 
 def cmd_info(args):
-  if 1:
-    ptype = pyflirc.get_product_type()
-    print("product type:", ptype)
-    print("version:", pyflirc.get_version())
+  ptype = pyflirc.get_product_type()
+  print("product type:", ptype)
+  print("version:", pyflirc.get_version())
 
-    try:
-      c = pyflirc.get_noise_cancel()
-      print("noise cancel:", c)
-    except pyflirc.error:
-      pass
-    
-    try:
-      n = pyflirc.get_interkey_delay()
-      print("interkey_delay:", n)
-    except pyflirc.error:
-      pass
-    try:
-      n = pyflirc.get_keys_recorded()
-      print("keys_recorded:", n)
-    except pyflirc.error:
-      pass
-    try:
-      n = pyflirc.get_keys_remaining()
-      print("keys_remaining:", n)
-    except pyflirc.error:
-      pass
+  try:
+    c = pyflirc.get_noise_cancel()
+    print("noise cancel:", c)
+  except pyflirc.error:
+    pass
+
+  try:
+    n = pyflirc.get_interkey_delay()
+    print("interkey_delay:", n)
+  except pyflirc.error:
+    pass
+  try:
+    n = pyflirc.get_keys_recorded()
+    print("keys_recorded:", n)
+  except pyflirc.error:
+    pass
+  try:
+    n = pyflirc.get_keys_remaining()
+    print("keys_remaining:", n)
+  except pyflirc.error:
+    pass
     
 def start(args):
   try:
-    #print (dir(pyflirc))
-    if 1:
-      rq = pyflirc.open()
-    else:
-      rq = pyflirc.wait_for_device()
+    rq = pyflirc.open()
     if rq < 0:
       print ("unable to open device", rq)
       return
-    if len(args.files) == 0:
-      cmd = "info"
-    else:
-      cmd = args.files[0]
+    cmd = "info" if len(args.files) == 0 else args.files[0]
     args.files = args.files[1:]
-    f = globals().get("cmd_%s" % cmd)
-    if f:
+    if f := globals().get(f"cmd_{cmd}"):
       f(args)
     else:
-      print ("error: no such command %s" % cmd)
+      print(f"error: no such command {cmd}")
   finally:
     pyflirc.close()
 
